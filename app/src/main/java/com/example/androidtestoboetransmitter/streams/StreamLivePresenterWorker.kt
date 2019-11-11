@@ -87,7 +87,7 @@ open class StreamLivePresenterWorker(
                     }
 
                     val executeTime = System.currentTimeMillis() - startData
-//                    sleep(getSampleInterval() - executeTime)
+                    sleep(getSampleInterval() - executeTime)
                 } catch (e: IOException) {
                     e.printStackTrace()
                     errorMsg = "Unable to get recording data"
