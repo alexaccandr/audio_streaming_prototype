@@ -50,7 +50,7 @@ void StreamingEngine::setMicrophoneOn(bool isOn) {
     isMicrophoneOn = isOn;
 
     oboe::Result result;
-    char* action;
+    char *action;
 
     if (isMicrophoneOn) {
         action = const_cast<char *>("resuming");
@@ -65,12 +65,15 @@ void StreamingEngine::setMicrophoneOn(bool isOn) {
     }
 }
 
-void StreamingEngine::readData(short *buf, int size) {
-    oboe::ResultWithValue<int32_t> status = mRecordingStream->read(buf, size, 0);
+int32_t timeout =1000000000;
+int32_t StreamingEngine::readData(short *buf, int size) {
+    oboe::ResultWithValue<int32_t> status = mRecordingStream->read(buf, size, timeout);
 
     if (!status) {
         LOGE("input stream read error: %s", oboe::convertToText(status.error()));
+        return -1;
     }
+    return status.value();
 }
 
 bool StreamingEngine::startStreaming() {
@@ -191,16 +194,16 @@ bool StreamingEngine::openPlaybackStream() {
  * @param builder The recording stream builder
  */
 oboe::AudioStreamBuilder *StreamingEngine::setupRecordingStreamParameters(
-    oboe::AudioStreamBuilder *builder) {
+        oboe::AudioStreamBuilder *builder) {
 
     // We set a callback to get audio data
     builder->setCallback(nullptr)
-        ->setBufferCapacityInFrames(mBufferSize)
-        ->setContentType(oboe::ContentType::Speech)
+            ->setBufferCapacityInFrames(mBufferSize)
+            ->setContentType(oboe::ContentType::Speech)
 //        ->setDeviceId(mRecordingDeviceId)
-        ->setDirection(oboe::Direction::Input)
-        ->setSampleRate(mSampleRate)
-        ->setChannelCount(mInputChannelCount);
+            ->setDirection(oboe::Direction::Input)
+            ->setSampleRate(mSampleRate)
+            ->setChannelCount(mInputChannelCount);
     return setupCommonStreamParameters(builder);
 }
 
@@ -211,12 +214,12 @@ oboe::AudioStreamBuilder *StreamingEngine::setupRecordingStreamParameters(
  * @param builder The playback stream builder
  */
 oboe::AudioStreamBuilder *StreamingEngine::setupPlaybackStreamParameters(
-    oboe::AudioStreamBuilder *builder) {
+        oboe::AudioStreamBuilder *builder) {
     builder//->setCallback(this)
 //        ->setDeviceId(mPlaybackDeviceId)
-        ->setDirection(oboe::Direction::Output)
-        ->setSampleRate(mSampleRate)
-        ->setChannelCount(mOutputChannelCount);
+            ->setDirection(oboe::Direction::Output)
+            ->setSampleRate(mSampleRate)
+            ->setChannelCount(mOutputChannelCount);
 
     return setupCommonStreamParameters(builder);
 }
@@ -227,14 +230,14 @@ oboe::AudioStreamBuilder *StreamingEngine::setupPlaybackStreamParameters(
  * @param builder The playback or recording stream builder
  */
 oboe::AudioStreamBuilder *StreamingEngine::setupCommonStreamParameters(
-    oboe::AudioStreamBuilder *builder) {
+        oboe::AudioStreamBuilder *builder) {
     // We request EXCLUSIVE mode since this will give us the lowest possible
     // latency.
     // If EXCLUSIVE mode isn't available the builder will fall back to SHARED
     // mode.
     builder->setFormat(mFormat)
-        ->setSharingMode(oboe::SharingMode::Exclusive)
-        ->setPerformanceMode(oboe::PerformanceMode::LowLatency);
+            ->setSharingMode(oboe::SharingMode::Exclusive)
+            ->setPerformanceMode(oboe::PerformanceMode::LowLatency);
     return builder;
 }
 
@@ -287,8 +290,8 @@ void StreamingEngine::restartStreams() {
         mRestartingLock.unlock();
     } else {
         LOGW(
-            "Restart stream operation already in progress - ignoring this "
-            "request");
+                "Restart stream operation already in progress - ignoring this "
+                "request");
         // We were unable to obtain the restarting lock which means the restart
         // operation is currently
         // active. This is probably because we received successive "stream
@@ -305,8 +308,8 @@ void StreamingEngine::restartStreams() {
 void StreamingEngine::warnIfNotLowLatency(oboe::AudioStream *stream) {
     if (stream->getPerformanceMode() != oboe::PerformanceMode::LowLatency) {
         LOGW(
-            "Stream is NOT low latency."
-            "Check your requested format, sample rate and channel count");
+                "Stream is NOT low latency."
+                "Check your requested format, sample rate and channel count");
     }
 }
 
@@ -320,7 +323,7 @@ void StreamingEngine::warnIfNotLowLatency(oboe::AudioStream *stream) {
  * @return: DataCallbackResult::Continue.
  */
 oboe::DataCallbackResult StreamingEngine::onAudioReady(
-    oboe::AudioStream *oboeStream, void *audioData, int32_t numFrames) {
+        oboe::AudioStream *oboeStream, void *audioData, int32_t numFrames) {
 
     /*assert(oboeStream == mRecordingStream);
     auto *inputData = static_cast<int16_t *>(audioData);
@@ -345,7 +348,7 @@ oboe::DataCallbackResult StreamingEngine::onAudioReady(
  * @param error: oboe's reason for closing the stream
  */
 void StreamingEngine::onErrorBeforeClose(oboe::AudioStream *oboeStream,
-                                          oboe::Result error) {
+                                         oboe::Result error) {
     LOGE("%s stream Error before close: %s",
          oboe::convertToText(oboeStream->getDirection()),
          oboe::convertToText(error));
@@ -358,7 +361,7 @@ void StreamingEngine::onErrorBeforeClose(oboe::AudioStream *oboeStream,
  * @param error
  */
 void StreamingEngine::onErrorAfterClose(oboe::AudioStream *oboeStream,
-                                         oboe::Result error) {
+                                        oboe::Result error) {
     LOGE("%s stream Error after close: %s",
          oboe::convertToText(oboeStream->getDirection()),
          oboe::convertToText(error));

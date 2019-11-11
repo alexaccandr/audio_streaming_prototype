@@ -23,7 +23,7 @@ class PlaybackEngine : oboe::AudioStreamCallback {
     private:
         oboe::AudioStream *mPlaybackStream = nullptr;
         int32_t mSampleRate;
-        static int const MAX_QUEUE_ITEMS = 2048;
+        static int const MAX_QUEUE_ITEMS = 4096 * 2;
         LockFreeQueue<int16_t, MAX_QUEUE_ITEMS> mAudioDataQueue;
 
         bool openStream();

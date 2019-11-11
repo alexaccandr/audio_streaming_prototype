@@ -128,19 +128,21 @@ Java_com_example_androidtestoboetransmitter_AudioEngine_native_1setMicrophoneOn(
     streamingEngine->setMicrophoneOn(isOn);
 }
 
-JNIEXPORT void JNICALL
+JNIEXPORT jint JNICALL
 Java_com_example_androidtestoboetransmitter_AudioEngine_native_1getRecordingData(JNIEnv *env,
                                                                 jobject thiz,
                                                                 jshortArray buffer_,
                                                                 jint size) {
     if (streamingEngine == nullptr) {
         LOGE("Engine is null, you need to create a new one");
-        return;
+        return -1;
     }
 
     auto * arr = new jshort[size];
-    streamingEngine->readData(arr, size);
+    int32_t readCount = streamingEngine->readData(arr, size);
+//    LOGI("Actual read bytes from buffer: %d", readCount);
     env->SetShortArrayRegion(buffer_, 0, size, arr);
+    return static_cast<jint>(readCount);
 }
 
 JNIEXPORT void JNICALL

@@ -111,6 +111,8 @@ oboe::DataCallbackResult PlaybackEngine::onAudioReady(oboe::AudioStream *audioSt
 
     int32_t framesToPad = numFrames - framesRead;
 
+    LOGE("Queue size: %d, Read frames: %d, frames to pad: %d", mAudioDataQueue.size(), framesRead,framesToPad);
+
     if (framesToPad > 0) {
         int32_t samplesRead = framesRead * audioStream->getChannelCount();
         int16_t *padPos = outputData + samplesRead;

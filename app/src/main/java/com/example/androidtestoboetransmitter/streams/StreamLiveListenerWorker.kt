@@ -11,8 +11,9 @@ import java.net.DatagramPacket
 import java.net.InetAddress
 import java.net.MulticastSocket
 
+
 class StreamLiveListenerWorker(context: Context, val sampleRate: Int, framesPerBufferInt: Int = 0) :
-        StreamLiveWorker(context, sampleRate, framesPerBufferInt) {
+    StreamLiveWorker(context, sampleRate, framesPerBufferInt) {
 
     private var isListening = true
 
@@ -36,7 +37,7 @@ class StreamLiveListenerWorker(context: Context, val sampleRate: Int, framesPerB
     var pushThread: Thread? = null
     override fun createThreads() {
         readThread = ReadThread().also { it.start() }
-        pushThread = PushThread().also { it.start() }
+//        pushThread = PushThread().also { it.start() }
     }
 
     inner class ReadThread : Thread() {
@@ -48,9 +49,8 @@ class StreamLiveListenerWorker(context: Context, val sampleRate: Int, framesPerB
             try {
                 socket = MulticastSocket(11111)
                 socket.joinGroup(InetAddress.getByName(MULTICAST_GROUP))
-                socket.timeToLive = 0
                 socket.soTimeout = 5000
-                val buffer = ByteArray(buf.size)
+                val buffer = ByteArray(65535)
                 val packet = DatagramPacket(buffer, buffer.size)
 
                 while (!socket.isClosed && !isInterrupted) {
@@ -58,16 +58,20 @@ class StreamLiveListenerWorker(context: Context, val sampleRate: Int, framesPerB
 
                     val data = packet.data
                     val len = packet.length
+                    val offset = packet.offset
 
                     /* Check if job is still active, since cancellation may have occurred
                      * during packet receiving
                      */
-                    Log.e(TAG, "Got bytes: $len")
+                    Log.e(TAG, "Got bytes: $len, offset: $offset")
                     if (!isInterrupted) {
-                        outStream!!.write(data, 0, len)
-
-                        if (len < 200)
-                            println("Data size $len")
+//                        outStream!!.write(data, offset, len)
+                        val data2 = ByteArray(len)
+                        System.arraycopy(data, offset, data2, 0, len)
+                        val shortArray = JavaUtils.byteArrayToShortArray(data2)
+                        AudioEngine.pushListeningData(shortArray, shortArray.size)
+//                        if (len < 200)
+//                            println("Data size $len")
                     }
 //                    sleep(getSampleInterval())
                 }
@@ -100,23 +104,21 @@ class StreamLiveListenerWorker(context: Context, val sampleRate: Int, framesPerB
 //                        buf[i] = shortBuf[i]
 //                    }
 
-                    val data = ByteArray(buf.size)
-                    val cnt = inStream!!.read(data, 0, buf.size)
-
-                    for (i in 0 until cnt) {
-                        buf[i] = G711.alaw2linear(data[i])
-                    }
-
-                    /* Check if job is still active, since cancellation may have occurred
-                     * during buffer computation
-                     */
-                    if (isAlive) {
-                        Log.e(TAG, "Play bytes: ${data.size}")
-                        // Write buffer data to AudioEngine LockFreeQueue
-                        AudioEngine.pushListeningData(buf, cnt)
-                    }
-
-                    sleep(getSampleInterval())
+//                    val data = ByteArray(buf.size)
+//                    val cnt = inStream!!.read(data, 0, buf.size)
+//
+//                    for (i in 0 until cnt) {
+//                        buf[i] = G711.alaw2linear(data[i])
+//                    }
+//
+//                    /* Check if job is still active, since cancellation may have occurred
+//                     * during buffer computation
+//                     */
+//                    if (isAlive) {
+//                        Log.e(TAG, "Play bytes: ${data.size}")
+//                        // Write buffer data to AudioEngine LockFreeQueue
+//                        AudioEngine.pushListeningData(buf, cnt)
+//                    }
                 } catch (e: IOException) {
                     e.printStackTrace()
                 } catch (e: IllegalStateException) {
@@ -133,5 +135,7 @@ class StreamLiveListenerWorker(context: Context, val sampleRate: Int, framesPerB
 //        // Stop AudioEngine stream and clean resources
         AudioEngine.stopListening()
         AudioEngine.deletePlaybackEngine()
+        readThread?.interrupt()
+        pushThread?.interrupt()
     }
 }

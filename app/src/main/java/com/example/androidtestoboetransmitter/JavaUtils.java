@@ -23,7 +23,6 @@ public class JavaUtils {
             ++short_index;
             byte_index += 2;
         }
-
         return buffer;
     }
 
