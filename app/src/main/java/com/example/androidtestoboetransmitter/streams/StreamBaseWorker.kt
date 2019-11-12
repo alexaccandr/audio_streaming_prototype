@@ -69,7 +69,7 @@ open class StreamBaseWorker(context: Context, sampleRate: Int, var framesPerBuff
     }
 
     open fun setupPipedStreams() {
-        inStream = PipedInputStream(buf.size)
+        inStream = PipedInputStream(65535)
         outStream = PipedOutputStream(inStream)
     }
 

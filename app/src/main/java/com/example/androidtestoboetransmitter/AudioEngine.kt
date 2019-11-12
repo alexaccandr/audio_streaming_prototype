@@ -61,12 +61,18 @@ object AudioEngine {
         native_pushData(buffer, length)
     }
 
+    fun writeShortArray(shortArray: ShortArray, length: Int): Int {
+        return native_writeData(shortArray, length)
+    }
+
     // Native methods
     private external fun native_createPlaybackEngine(sampleRate: Int): Boolean
+
     private external fun native_deletePlaybackEngine()
     private external fun native_startListening(): Boolean
     private external fun native_stopListening()
     private external fun native_pushData(buffer: ShortArray, size: Int)
+    private external fun native_writeData(shortArray: ShortArray, size: Int): Int
     //endregion
 
     //region PRESENTER
@@ -139,6 +145,7 @@ object AudioEngine {
 
     // Native methods
     private external fun native_createStreamingEngine(sampleRate: Int, size: Int): Boolean
+
     private external fun native_deleteStreamingEngine()
     private external fun native_startStreaming(): Boolean
     private external fun native_setPlaybackOn(isOn: Boolean)

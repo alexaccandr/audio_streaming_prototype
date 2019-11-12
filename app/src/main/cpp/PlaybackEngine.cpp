@@ -20,7 +20,7 @@ bool PlaybackEngine::startPlaying() {
 
 bool PlaybackEngine::openStream() {
     oboe::AudioStreamBuilder builder;
-    builder.setCallback(this);
+//    builder.setCallback(this);
     builder.setDirection(oboe::Direction::Output);
     builder.setPerformanceMode(oboe::PerformanceMode::LowLatency);
     builder.setSharingMode(oboe::SharingMode::Exclusive);
@@ -62,6 +62,16 @@ void PlaybackEngine::pushData(short *buf, int size) {
     }
 }
 
+int32_t PlaybackEngine::writeData(short *buf, int size) {
+    oboe::ResultWithValue<int32_t> status = mPlaybackStream->write(buf, size, 200000000);
+
+    if (!status) {
+        LOGE("input stream read error: %s", oboe::convertToText(status.error()));
+        return -1;
+    }
+    return status.value();
+}
+
 void PlaybackEngine::stopPlaying() {
     stopStream();
     closeStream();
@@ -85,42 +95,4 @@ void PlaybackEngine::closeStream() {
             LOGE("Error closing stream. %s", oboe::convertToText(result));
         }
     }
-}
-
-oboe::DataCallbackResult PlaybackEngine::onAudioReady(oboe::AudioStream *audioStream, void *audioData, int32_t numFrames) {
-
-    // We requested AudioFormat::I16 so we assume we got it. For production code always check what format
-    // the stream has and cast to the appropriate type.
-
-    auto *outputData = static_cast<int16_t *>(audioData);
-    int16_t nextFrame;
-    int32_t framesRead = 0;
-
-    // Read data from LockFreeQueue and write it to outputData
-    for (int i = 0; i < numFrames; ++i) {
-        bool popped = mAudioDataQueue.pop(nextFrame);
-
-        if (popped) {
-            outputData[i] = nextFrame;
-            framesRead++;
-        } else {
-            // Handle the case of no data
-            break;
-        }
-    }
-
-    int32_t framesToPad = numFrames - framesRead;
-
-    LOGE("Queue size: %d, Read frames: %d, frames to pad: %d", mAudioDataQueue.size(), framesRead,framesToPad);
-
-    if (framesToPad > 0) {
-        int32_t samplesRead = framesRead * audioStream->getChannelCount();
-        int16_t *padPos = outputData + samplesRead;
-        auto size = static_cast<size_t>(framesToPad * audioStream->getBytesPerFrame());
-
-        // pad the buffer with zeros
-        memset(padPos, 0, size);
-    }
-
-    return oboe::DataCallbackResult::Continue;
 }

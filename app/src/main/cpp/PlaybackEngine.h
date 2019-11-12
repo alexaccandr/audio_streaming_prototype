@@ -11,14 +11,14 @@
 
 #endif
 
-class PlaybackEngine : oboe::AudioStreamCallback {
+class PlaybackEngine {
 
     public:
         explicit PlaybackEngine(int32_t sampleRate);
         bool startPlaying();
         void stopPlaying();
         void pushData(short *buf, int size);
-        oboe::DataCallbackResult onAudioReady(oboe::AudioStream *audioStream, void *audioData, int32_t numFrames) override;
+    int32_t writeData(short *buf, int size);
 
     private:
         oboe::AudioStream *mPlaybackStream = nullptr;

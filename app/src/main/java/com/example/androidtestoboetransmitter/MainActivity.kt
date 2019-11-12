@@ -83,8 +83,8 @@ class MainActivity : AppCompatActivity() {
         val streamBaseWorker = StreamLivePresenterWorker(
             context,
 //            Integer.parseInt(audioManager.getProperty(AudioManager.PROPERTY_OUTPUT_SAMPLE_RATE)),
-            8000,
-            128
+            16000,
+            192
         )
 
         override fun run() {
@@ -98,8 +98,8 @@ class MainActivity : AppCompatActivity() {
         val streamBaseWorker = StreamLiveListenerWorker(
             context,
 //            Integer.parseInt(audioManager.getProperty(AudioManager.PROPERTY_OUTPUT_SAMPLE_RATE)),
-            8000,
-            128
+            16000,
+            192
         )
 
         override fun run() {

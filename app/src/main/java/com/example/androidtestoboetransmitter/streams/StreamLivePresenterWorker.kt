@@ -6,6 +6,7 @@ import com.example.androidtestoboetransmitter.AudioEngine
 import com.example.androidtestoboetransmitter.JavaUtils
 import com.example.androidtestoboetransmitter.StreamLiveWorker
 import java.io.IOException
+import java.nio.ByteBuffer
 
 
 open class StreamLivePresenterWorker(
@@ -37,12 +38,10 @@ open class StreamLivePresenterWorker(
         }
     }
 
-    lateinit var pushThread: PushThread
     lateinit var readThread: ReadThread
 
     override fun createThreads() {
         readThread = ReadThread().also { it.start() }
-        pushThread = PushThread().also { it.start() }
     }
 
     inner class ReadThread : Thread() {
@@ -54,7 +53,6 @@ open class StreamLivePresenterWorker(
 
             while (!isInterrupted) {  // while job is not cancelled
                 try {
-                    val startData = System.currentTimeMillis()
                     // Get audio data from recording stream
                     var readBytes = AudioEngine.getRecordingData(buf, buf.size)
                     if (readBytes == 0) {
@@ -64,7 +62,7 @@ open class StreamLivePresenterWorker(
                         }
                         Log.e(TAG, "Last Index: $readBytes")
                     } else {
-                        Log.e(TAG, "Actual bytes: $readBytes")
+//                        Log.e(TAG, "Actual bytes: $readBytes")
                     }
 
 //                    val len = buf.size
@@ -75,19 +73,13 @@ open class StreamLivePresenterWorker(
                         shortArray[i] = buf[i]
                     }
                     val data = JavaUtils.shortToByte_Twiddle_Method(shortArray)
-//                    for (i in 0 until len) {
-//                        data[i] = G711.linear2alaw(buf[i])
-//                    }
 
                     if (!isInterrupted) {
-                        Log.e(TAG, "readPackets: ${data.size}")
-                        // Push audio data to pipe
-//                        outStream?.write(data, 0, len)
+                        Log.e(TAG, "sendPackets: ${data.size}")
                         sendPacket(data)
                     }
 
-                    val executeTime = System.currentTimeMillis() - startData
-                    sleep(getSampleInterval() - executeTime)
+                    sleep(getSampleInterval())
                 } catch (e: IOException) {
                     e.printStackTrace()
                     errorMsg = "Unable to get recording data"
@@ -127,7 +119,6 @@ open class StreamLivePresenterWorker(
 //            }
         }
     }
-
     override fun disconnect() {
         super.disconnect()
 

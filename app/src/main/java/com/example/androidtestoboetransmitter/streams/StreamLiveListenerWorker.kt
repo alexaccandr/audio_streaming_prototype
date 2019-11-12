@@ -3,13 +3,13 @@ package com.voxtours.vow.managers.streaming
 import android.content.Context
 import android.util.Log
 import com.example.androidtestoboetransmitter.AudioEngine
-import com.example.androidtestoboetransmitter.G711
 import com.example.androidtestoboetransmitter.JavaUtils
 import com.example.androidtestoboetransmitter.StreamLiveWorker
 import java.io.IOException
 import java.net.DatagramPacket
 import java.net.InetAddress
 import java.net.MulticastSocket
+import java.nio.ByteBuffer
 
 
 class StreamLiveListenerWorker(context: Context, val sampleRate: Int, framesPerBufferInt: Int = 0) :
@@ -18,41 +18,41 @@ class StreamLiveListenerWorker(context: Context, val sampleRate: Int, framesPerB
     private var isListening = true
 
     override fun initEngine() {
-        if (AudioEngine.createPlaybackEngine(sampleRate)) {
-            if (AudioEngine.startListening()) {
-                setupStreaming()
-            } else {
-                errorMsg = "Unable to start PlaybackEngine."
-                Log.e(TAG, errorMsg)
-                onStreamError()
-            }
-        } else {
-            errorMsg = "Unable to create PlaybackEngine."
-            Log.e(TAG, errorMsg)
-            onStreamError()
-        }
+        setupStreaming()
+        readThread = ReadThread().also { it.start() }
+        pushThread = PushThread().also { it.start() }
     }
 
     var readThread: Thread? = null
     var pushThread: Thread? = null
     override fun createThreads() {
-        readThread = ReadThread().also { it.start() }
-//        pushThread = PushThread().also { it.start() }
     }
 
     inner class ReadThread : Thread() {
 
+        var setupOnce = false
         override fun run() {
             Thread.currentThread().priority = MAX_PRIORITY
             acquireLock()
-
+            if (AudioEngine.createPlaybackEngine(sampleRate)) {
+                if (AudioEngine.startListening()) {
+                } else {
+                    errorMsg = "Unable to start PlaybackEngine."
+                    Log.e(TAG, errorMsg)
+                    onStreamError()
+                }
+            } else {
+                errorMsg = "Unable to create PlaybackEngine."
+                Log.e(TAG, errorMsg)
+                onStreamError()
+            }
             try {
                 socket = MulticastSocket(11111)
                 socket.joinGroup(InetAddress.getByName(MULTICAST_GROUP))
                 socket.soTimeout = 5000
                 val buffer = ByteArray(65535)
                 val packet = DatagramPacket(buffer, buffer.size)
-
+                val byteBuffer = ByteBuffer.allocate(1024 * 16)
                 while (!socket.isClosed && !isInterrupted) {
                     socket.receive(packet)
 
@@ -63,13 +63,26 @@ class StreamLiveListenerWorker(context: Context, val sampleRate: Int, framesPerB
                     /* Check if job is still active, since cancellation may have occurred
                      * during packet receiving
                      */
-                    Log.e(TAG, "Got bytes: $len, offset: $offset")
+//                    Log.e(TAG, "Read bytes: $len, offset: $offset")
                     if (!isInterrupted) {
 //                        outStream!!.write(data, offset, len)
-                        val data2 = ByteArray(len)
-                        System.arraycopy(data, offset, data2, 0, len)
-                        val shortArray = JavaUtils.byteArrayToShortArray(data2)
-                        AudioEngine.pushListeningData(shortArray, shortArray.size)
+//                        val data2 = ByteArray(len)
+//                        System.arraycopy(data, offset, data2, 0, len)
+                        byteBuffer.put(data, offset, len)
+                        if (!setupOnce) {
+                            if (byteBuffer.position() < 1024 * 8) {
+                                continue
+                            } else {
+                                setupOnce = true
+                            }
+                            continue
+                        }
+                        byteBuffer.flip()
+                        val bufferToSend = ByteArray(byteBuffer.limit())
+                        byteBuffer.get(bufferToSend)
+                        outStream!!.write(bufferToSend)
+                        outStream!!.flush()
+                        byteBuffer.clear()
 //                        if (len < 200)
 //                            println("Data size $len")
                     }
@@ -96,9 +109,24 @@ class StreamLiveListenerWorker(context: Context, val sampleRate: Int, framesPerB
 
             while (isAlive) {  // while job is not cancelled
                 try {
-//                    val data = ByteArray(buf.size)
-//                    val cnt = inStream!!.read(data, 0, data.size)
-//
+
+                    var data = ByteArray(buf.size)
+                    // TODO ?!
+
+                    val cnt = inStream!!.read(data, 0, data.size)
+                    if (cnt < data.size) {
+                        Log.e("WRITEN OOOPS!!!", "cnt < data.size)")
+                        val dataCopy = ByteArray(cnt)
+                        System.arraycopy(data, 0, dataCopy, 0, cnt)
+                        data = dataCopy
+                    }
+
+                    val shortArray = JavaUtils.byteArrayToShortArray(data)
+                    val writenBytes = AudioEngine.writeShortArray(shortArray, shortArray.size)
+                    if (writenBytes != shortArray.size) {
+                        Log.e("WRONG", "${writenBytes} != ${shortArray.size}")
+                    }
+
 //                    val shortBuf = JavaUtils.byteArrayToShortArray(data)
 //                    for (i in shortBuf.indices) {
 //                        buf[i] = shortBuf[i]
