@@ -62,8 +62,9 @@ void PlaybackEngine::pushData(short *buf, int size) {
     }
 }
 
+const int32_t timeout = 2000000;
 int32_t PlaybackEngine::writeData(short *buf, int size) {
-    oboe::ResultWithValue<int32_t> status = mPlaybackStream->write(buf, size, 200000000);
+    oboe::ResultWithValue<int32_t> status = mPlaybackStream->write(buf, size, timeout); // 20 ms timeout
 
     if (!status) {
         LOGE("input stream read error: %s", oboe::convertToText(status.error()));

@@ -30,17 +30,6 @@ class MainActivity : AppCompatActivity() {
             createListenerThread?.start()
         }
 
-        stopListener.setOnClickListener {
-            createListenerThread?.apply {
-                streamBaseWorker.disconnect()
-            }
-        }
-        stopDiscovery.setOnClickListener {
-            createBroadcastThread?.apply {
-                streamBaseWorker.disconnect()
-            }
-        }
-
         if (!isRecordPermissionGranted()) run { requestPermissions() }
     }
 
