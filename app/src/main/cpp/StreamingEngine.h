@@ -31,7 +31,7 @@ class StreamingEngine : public oboe::AudioStreamCallback {
     void setPlaybackDeviceId(int32_t deviceId);
     void setPlaybackOn(bool isOn);
     void setMicrophoneOn(bool isOn);
-    int32_t readData(short *buf, int size);
+    int32_t readData(short *buf, int size, long long timeoutMs);
     bool startStreaming();
     void stopStreaming();
 

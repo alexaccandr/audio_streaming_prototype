@@ -54,7 +54,7 @@ open class StreamLivePresenterWorker(
             while (!isInterrupted) {  // while job is not cancelled
                 try {
                     // Get audio data from recording stream
-                    var readBytes = AudioEngine.getRecordingData(buf, buf.size)
+                    var readBytes = AudioEngine.getRecordingData(buf, buf.size, getSampleInterval())
                     if (readBytes == 0) {
                         readBytes = buf.indexOfLast { it != 0.toShort() }
                         if (readBytes == -1) {
@@ -78,8 +78,6 @@ open class StreamLivePresenterWorker(
                         Log.e(TAG, "sendPackets: ${data.size}")
                         sendPacket(data)
                     }
-
-                    sleep(getSampleInterval())
                 } catch (e: IOException) {
                     e.printStackTrace()
                     errorMsg = "Unable to get recording data"

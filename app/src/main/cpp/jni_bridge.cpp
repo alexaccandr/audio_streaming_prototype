@@ -76,7 +76,7 @@ Java_com_example_androidtestoboetransmitter_AudioEngine_native_1pushData(JNIEnv 
     env->ReleaseShortArrayElements(buffer_, buffer, 0);
 }
 
-
+int64_t timeout = 2000000;
 JNIEXPORT jint JNICALL
 Java_com_example_androidtestoboetransmitter_AudioEngine_native_1writeData(JNIEnv *env,
                                                                           jobject thiz,
@@ -89,7 +89,8 @@ Java_com_example_androidtestoboetransmitter_AudioEngine_native_1writeData(JNIEnv
 
 //    auto * arr = new jshort[size];
     jshort* buffer = env->GetShortArrayElements(buffer_, nullptr);
-    int32_t writeCount = playbackEngine->writeData(buffer, size);
+
+    int32_t writeCount = playbackEngine->writeData(buffer, size,timeout);
 //    LOGI("Actual read bytes from buffer: %d", readCount);
     env->ReleaseShortArrayElements(buffer_, buffer, 0);
     return static_cast<jint>(writeCount);
@@ -151,14 +152,15 @@ JNIEXPORT jint JNICALL
 Java_com_example_androidtestoboetransmitter_AudioEngine_native_1getRecordingData(JNIEnv *env,
                                                                 jobject thiz,
                                                                 jshortArray buffer_,
-                                                                jint size) {
+                                                                jint size,
+                                                                jlong timeoutMs) {
     if (streamingEngine == nullptr) {
         LOGE("Engine is null, you need to create a new one");
         return -1;
     }
 
     auto * arr = new jshort[size];
-    int32_t readCount = streamingEngine->readData(arr, size);
+    int32_t readCount = streamingEngine->readData(arr, size, timeoutMs);
 //    LOGI("Actual read bytes from buffer: %d", readCount);
     env->SetShortArrayRegion(buffer_, 0, size, arr);
     return static_cast<jint>(readCount);

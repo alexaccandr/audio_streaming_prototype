@@ -65,8 +65,9 @@ void StreamingEngine::setMicrophoneOn(bool isOn) {
     }
 }
 
-int32_t StreamingEngine::readData(short *buf, int size) {
-    oboe::ResultWithValue<int32_t> status = mRecordingStream->read(buf, size, 0);
+int32_t StreamingEngine::readData(short *buf, int size, long long timeoutMs) {
+    int64_t readTimeOut = oboe::kNanosPerMillisecond * timeoutMs;
+    oboe::ResultWithValue<int32_t> status = mRecordingStream->read(buf, size, readTimeOut);
 
     if (!status) {
         LOGE("input stream read error: %s", oboe::convertToText(status.error()));

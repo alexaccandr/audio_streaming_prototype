@@ -122,8 +122,8 @@ object AudioEngine {
      *  @param buffer The buffer to store recorded audio data
      *  @param size The size of the streaming buffer
      */
-    fun getRecordingData(buffer: ShortArray, size: Int): Int {
-        return native_getRecordingData(buffer, size)
+    fun getRecordingData(buffer: ShortArray, size: Int, timeoutMs: Long): Int {
+        return native_getRecordingData(buffer, size, timeoutMs)
     }
 
     /**
@@ -150,7 +150,7 @@ object AudioEngine {
     private external fun native_startStreaming(): Boolean
     private external fun native_setPlaybackOn(isOn: Boolean)
     private external fun native_setMicrophoneOn(isOn: Boolean)
-    private external fun native_getRecordingData(buffer: ShortArray, size: Int): Int
+    private external fun native_getRecordingData(buffer: ShortArray, size: Int, timeoutMs: Long): Int
     private external fun native_stopStreaming()
     //endregion
 }

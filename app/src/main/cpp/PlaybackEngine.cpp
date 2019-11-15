@@ -62,8 +62,7 @@ void PlaybackEngine::pushData(short *buf, int size) {
     }
 }
 
-const int32_t timeout = 2000000;
-int32_t PlaybackEngine::writeData(short *buf, int size) {
+int32_t PlaybackEngine::writeData(short *buf, int size, int64_t timeout) {
     oboe::ResultWithValue<int32_t> status = mPlaybackStream->write(buf, size, timeout); // 20 ms timeout
 
     if (!status) {

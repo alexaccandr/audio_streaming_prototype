@@ -18,7 +18,7 @@ class PlaybackEngine {
         bool startPlaying();
         void stopPlaying();
         void pushData(short *buf, int size);
-    int32_t writeData(short *buf, int size);
+    int32_t writeData(short *buf, int size, int64_t timeout);
 
     private:
         oboe::AudioStream *mPlaybackStream = nullptr;
